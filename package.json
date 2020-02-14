@@ -1,0 +1,24 @@
+{
+  "name": "oritelegramauth",
+  "version": "0.0.2",
+  "description": "origami core teegram authentication",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vahidHossaini/oritelegramauth.git"
+  },
+  "keywords": [
+    "origamicore",
+    "telegram",
+    "authentication"
+  ],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/vahidHossaini/oritelegramauth/issues"
+  },
+  "homepage": "https://github.com/vahidHossaini/oritelegramauth#readme"
+}
