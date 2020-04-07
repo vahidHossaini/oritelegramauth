@@ -15,8 +15,13 @@ module.exports = class telegramAuthIndex
         if(this.config.captchaContext)
            this.ccontext=this.config.captchaContext
         this.runTelegram(this.config);
+		
 	}
-    async onGetMessage(msg)
+	getExpTime(min)
+	{
+		return new Date((new Date()).getTime()+1000*60*min )
+	}
+    async onGetMessage(msg,self,bot)
     {
         var id = msg.from.id;
         if(msg.contact)
@@ -28,7 +33,7 @@ module.exports = class telegramAuthIndex
                     "reply_markup": {
                         "one_time_keyboard": true,
                         "keyboard": [[{
-                            text: "My phone number",
+                            text: "Share Phone Number",
                             request_contact: true
                         }] ]
                     }
@@ -37,22 +42,23 @@ module.exports = class telegramAuthIndex
             }
             else
             {
-                await global.db.Save(self.context,'telegramauth_ids',{where:{_id:msg.from.id,phone:msg.contact.phone_number,name:msg.contact.Mohadeseh}});
-                var code = await global.db.SearchOne(self.context,'telegramauth_code',{where:{phone:msg.contact.phone_number}});
+                await global.db.Save(self.context,'telegramauth_ids',["_id"], {_id:msg.from.id,phone:msg.contact.phone_number,name:msg.contact.Mohadeseh});
+console.log('------>> ',msg.contact.phone_number,msg.contact.phone_number.replace("+",""))              
+			  var code = await global.db.SearchOne(self.context,'telegramauth_code',{where:{phone:msg.contact.phone_number.replace("+","")}});
                 if(!code)
                 {
-                    bot.sendMessage(msg.from.id,'First Go Application',{
+                    bot.sendMessage(msg.from.id,'Please enter your phone number in AreaX App',{
                         "parse_mode": "Markdown", 
                     })
                     return;
                 }
                 
-                bot.sendMessage(msg.from.id,'YourCode is : '+code.code,{
+                bot.sendMessage(msg.from.id,'Your Code is : '+code.code,{
                     "parse_mode": "Markdown",
                     "reply_markup": {
                         "one_time_keyboard": true,
                         "keyboard": [[{
-                            text: "My phone number",
+                            text: "Share Phone Number",
                             request_contact: true
                         }] ]
                     }
@@ -69,18 +75,18 @@ module.exports = class telegramAuthIndex
             var code = await global.db.SearchOne(self.context,'telegramauth_code',{where:{phone:user.phone}});
             if(!code)
             {
-                bot.sendMessage(msg.from.id,'First Go Application',{
+                bot.sendMessage(msg.from.id,'Please enter your phone number in AreaX App',{
                     "parse_mode": "Markdown", 
                 })
                 return;
             }
             
-            bot.sendMessage(msg.from.id,'YourCode is : '+code.code,{
+            bot.sendMessage(msg.from.id,'Your Code is : '+code.code,{
                 "parse_mode": "Markdown",
                 "reply_markup": {
                     "one_time_keyboard": true,
                     "keyboard": [[{
-                        text: "My phone number",
+                        text: "Share Phone Number",
                         request_contact: true
                     }] ]
                 }
@@ -93,7 +99,7 @@ module.exports = class telegramAuthIndex
                 "reply_markup": {
                     "one_time_keyboard": true,
                     "keyboard": [[{
-                        text: "My phone number",
+                        text: "Share Phone Number",
                         request_contact: true
                     }] ]
                 }
@@ -106,7 +112,7 @@ module.exports = class telegramAuthIndex
         var bot = new TelegramBot(config.apiKey, { polling: true });
        // bot.on('inline_query',(msg)=>{ this.onInlineQuery(msg)})
         bot.on('message', (msg)=>{
-            this.onGetMessage(msg)
+            this.onGetMessage(msg,this,bot)
         })
         // bot.on('callback_query',(msg)=>{
             // this.onCallbackQuery(msg)
@@ -154,6 +160,7 @@ module.exports = class telegramAuthIndex
     {
         var dt=msg.data;
 		var code = await global.db.SearchOne(self.context,'telegramauth_code',{where:{phone:dt.phone}});
+		console.log('-->',dt)
 		if(!code)
 		{
 			return func({m:"smsauth002"})
@@ -168,7 +175,26 @@ module.exports = class telegramAuthIndex
 			await global.db.Save(self.context,'telegramauth_code',['_id'],code);
 			return func({m:"smsauth005"});
 		}		
+		
         var acc = await global.acc.existAccount({$filter:"phones/number eq '"+dt.phone+"'"});
+		if(!acc.value.length)
+		{
+			console.log('------------------->',acc.value)
+			if(self.config.myContries)
+			{
+				for(var a of self.config.myContries)
+				{
+					console.log('------------------->',a)
+					if(dt.phone.indexOf(a)==0)
+					{
+						var ph=dt.phone.replace(a,"0")
+						console.log('------------------->',ph)
+						acc = await global.acc.existAccount({$filter:"phones/number eq '"+ph+"'"});
+						console.log('------------------->',acc)
+					}
+				}
+			}
+		}
 		var userid = uuid.v4();
 		var roles=await global.db.SearchOne(self.context,'global_options',{where:{name:'telegramauth_role'}});
 		if(!roles)
@@ -186,6 +212,7 @@ module.exports = class telegramAuthIndex
 			await global.acc.update(userid,'phones',[{number:dt.phone}]);
 		}
 		
+		await global.db.Delete(self.context,'telegramauth_code',['_id'],code);
 		return func (null,{session:[
 				{name:'userid',value:userid},
 				{name:'type',value:'telegramAuth'},

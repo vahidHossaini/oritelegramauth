@@ -30,7 +30,7 @@ module.exports = class telegramAuthBootstrap{
 	  
 	   
     ]
-    this.auth=[ 
+    this.auth=[ 'login','verify',
             {
                 name: 'isLogin',
                 role: 'login'

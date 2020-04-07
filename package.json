@@ -1,6 +1,6 @@
 {
   "name": "oritelegramauth",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "origami core teegram authentication",
   "main": "index.js",
   "scripts": {
